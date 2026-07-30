@@ -1,60 +1,61 @@
-# zabbix-agent2 (arm64 / aarch64) — Kylin V10 交叉编译产物
+# zabbix-agent2 (arm64 / aarch64) — Kylin V10 cross-compiled artifacts
 
-Zabbix Agent2 的 aarch64 交叉编译产物，目标平台 **银河麒麟 Kylin V10（Tercel）arm64 / glibc 2.28**。
-构建方案（宿主机 x86_64 → aarch64，aarch64 交叉 gcc + CGO）见各版本 SOP 文档。
+AArch64 cross-compiled artifacts for **Zabbix Agent2**, targeting **Kylin V10 (Tercel) arm64 / glibc 2.28**.
+Build approach (host x86_64 → aarch64, aarch64 cross gcc + CGO) is documented in the per-version SOP files.
 
-## 版本与产物
+## Versions and artifacts
 
-> 两套构建共享安装前缀 `/home/zabbix/zabbix_agent2`（CD 配置不变）。**5.2.6 制品均带 `_5.2.6` 后缀，与 5.2.1 互不覆盖。**
+> Both builds share the install prefix `/home/zabbix/zabbix_agent2` (CD config unchanged).
+> **5.2.6 artifacts carry a `_5.2.6` suffix and never overwrite the 5.2.1 files.**
 
-### Zabbix Agent2 5.2.1（基线）
-- aarch64 / glibc ≤ 2.28 兼容
-- 内置 **Docker 插件**；Oracle 插件已裁剪
-- 对接 server 5.2.1（官方支持 agent ≤ server）
+### Zabbix Agent2 5.2.1 (baseline)
+- aarch64 / glibc ≤ 2.28 compatible
+- Ships the **Docker** plugin; Oracle plugin excluded
+- For server 5.2.1 (official support: agent ≤ server)
 
-| 文件 | 说明 |
+| File | Description |
 |---|---|
-| `zabbix_agent2` | aarch64 二进制本体（18 MB，ELF64 AArch64，最高需求 GLIBC_2.28） |
-| `zabbix_agent2-aarch64-kylin.tar.gz` | 开箱即用部署包（8.4 MB）：二进制 + 前缀对齐配置 + systemd 单元 + 启停脚本 |
-| `zabbix-agent2-arm64-crosscompile.md` | 完整交叉编译 SOP（glibc 2.28 对齐、resolv 弱符号 shim 等踩坑） |
-| `产物清单.md` | 产物校验清单（架构/GLIBC/依赖/docker 插件/qemu 运行结果/部署方式） |
+| `zabbix_agent2` | aarch64 binary (18 MB, ELF64 AArch64, max GLIBC_2.28) |
+| `zabbix_agent2-aarch64-kylin.tar.gz` | Turnkey deploy package (8.4 MB): binary + prefix-aligned config + systemd unit + start/stop script |
+| `zabbix-agent2-arm64-crosscompile.md` | Full cross-compile SOP (glibc 2.28 alignment, resolv weak-symbol shim, pitfalls) |
+| `产物清单.md` | Artifact verification checklist (arch/GLIBC/deps/docker plugin/qemu run/deploy) |
 
-### Zabbix Agent2 5.2.6（推荐，含 MongoDB）
-- aarch64 / glibc ≤ 2.28 兼容
-- **内置 MongoDB 插件**（`zabbix.com/plugins/mongodb`，运行时已加载 `plugin 'Mongo'`）
-- 另含更多插件：Oracle / Ceph / Redis / Memcached / MQTT / Mysql / Postgres 等（均为纯 Go 驱动，无额外原生客户端库硬依赖）
-- 同 minor 线、最小版本偏移，对接 server 5.2.1 官方支持，**监控 MongoDB 推荐此版本**
+### Zabbix Agent2 5.2.6 (recommended, with MongoDB)
+- aarch64 / glibc ≤ 2.28 compatible
+- **Built-in MongoDB plugin** (`zabbix.com/plugins/mongodb`, `plugin 'Mongo'` loaded at runtime)
+- Also bundles more plugins: Oracle / Ceph / Redis / Memcached / MQTT / Mysql / Postgres (all pure-Go drivers, no extra native client hard deps)
+- Same minor line, minimal version skew; official for server 5.2.1 — **recommended for MongoDB monitoring**
 
-| 文件 | 说明 |
+| File | Description |
 |---|---|
-| `zabbix_agent2_5.2.6` | aarch64 二进制本体（21 MB，ELF64 AArch64，最高需求 GLIBC_2.28） |
-| `zabbix_agent2-aarch64-kylin-5.2.6.tar.gz` | 开箱即用部署包（10 MB）：结构与 5.2.1 包一致（内部顶层 `zabbix_agent2/`） |
-| `zabbix-agent2-arm64-crosscompile-5.2.6.md` | 5.2.6 专用 SOP（configure DNS 检查 patch、`sys/sysctl.h` 双 `-isystem`、shim 注入点差异） |
-| `产物清单-5.2.6.md` | 5.2.6 产物校验清单（含 qemu 版本/MongoDB 插件/部署包完整性） |
+| `zabbix_agent2_5.2.6` | aarch64 binary (21 MB, ELF64 AArch64, max GLIBC_2.28) |
+| `zabbix_agent2-aarch64-kylin-5.2.6.tar.gz` | Turnkey deploy package (10 MB); same layout as the 5.2.1 package (top dir `zabbix_agent2/`) |
+| `zabbix-agent2-arm64-crosscompile-5.2.6.md` | 5.2.6 SOP (configure DNS-check patch, `sys/sysctl.h` dual `-isystem`, shim injection-point difference) |
+| `产物清单-5.2.6.md` | 5.2.6 verification checklist (qemu version / MongoDB plugin / package integrity) |
 
-## 快速部署（Kylin V10 aarch64）
+## Quick deploy (Kylin V10 aarch64)
 
 ```bash
-# 以 5.2.6 为例（5.2.1 把包名/二进制名去掉 _5.2.6 即可）
+# example uses 5.2.6; for 5.2.1 drop the _5.2.6 suffix from package/binary names
 cd /home/zabbix && tar -xzf zabbix_agent2-aarch64-kylin-5.2.6.tar.gz
 useradd -M -s /sbin/nologin zabbix 2>/dev/null
 chown -R zabbix:zabbix /home/zabbix/zabbix_agent2
-# 改 etc/zabbix_agent2.conf 里的 Server / ServerActive / Hostname 占位
-systemctl enable --now zabbix-agent2     # 或 deploy/zabbix_agent2.sh start
+# edit etc/zabbix_agent2.conf: Server / ServerActive / Hostname
+systemctl enable --now zabbix-agent2     # or deploy/zabbix_agent2.sh start
 ```
 
-- 二进制内置默认配置路径 `/home/zabbix/zabbix_agent2/etc/zabbix_agent2.conf`，解压后无需 `-c`。
-- MongoDB 监控：在 `etc/zabbix_agent2.d/` 增加 MongoDB 配置（URI / 账号），加载内置 `Mongo` 插件。
-- 改端口：`etc/zabbix_agent2.conf` 中 `ListenPort`（默认 10050），或 `zabbix_agent2 -c <conf> -p <port>` 临时指定。
+- The binary's built-in default config path is `/home/zabbix/zabbix_agent2/etc/zabbix_agent2.conf` — no `-c` needed after extraction.
+- MongoDB monitoring: add a MongoDB config under `etc/zabbix_agent2.d/` (URI / credentials) to load the built-in `Mongo` plugin.
+- Change port: `ListenPort` in `etc/zabbix_agent2.conf` (default 10050), or `zabbix_agent2 -c <conf> -p <port>` for a one-off.
 
-## 验证摘要
+## Verification summary
 
-| 检查项 | 5.2.1 | 5.2.6 |
+| Check | 5.2.1 | 5.2.6 |
 |---|---|---|
-| 架构 | aarch64 | aarch64 |
-| glibc 需求 | ≤ 2.28 | ≤ 2.28 |
-| 版本 (qemu `--version`) | 5.2.1 | 5.2.6 |
-| 关键插件 | Docker | **MongoDB** (+ Docker/Oracle/...) |
-| 动态依赖 | libdl/libresolv/libpthread/libc | 同上（无额外硬依赖） |
+| Arch | aarch64 | aarch64 |
+| glibc requirement | ≤ 2.28 | ≤ 2.28 |
+| Version (qemu `--version`) | 5.2.1 | 5.2.6 |
+| Key plugin | Docker | **MongoDB** (+ Docker/Oracle/...) |
+| Dynamic deps | libdl/libresolv/libpthread/libc | same (no extra hard deps) |
 
-> RabbitMQ：两版本均无原生 Agent2 插件，统一用 HTTP 模板监控。
+> RabbitMQ: neither version has a native Agent2 plugin — monitor via the HTTP template.
